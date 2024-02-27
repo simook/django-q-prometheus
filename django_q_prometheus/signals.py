@@ -6,24 +6,26 @@ from django_q_prometheus.metrics import Metrics
 
 logger = logging.getLogger('django.server')
 
+MODE='livemostrecent'
+
 TASKS_SUCCESS = Gauge('django_q_tasks_success', 
-    'A count of successful tasks.')
+    'A count of successful tasks.', multiprocess_mode=MODE)
 TASKS_FAILED = Gauge('django_q_tasks_failed',
-    'A count of failed tasks.')
+    'A count of failed tasks.', multiprocess_mode=MODE)
 TASKS_QUEUED = Gauge('django_q_tasks_queued',
-    'A count of queued tasks.')
+    'A count of queued tasks.', multiprocess_mode=MODE)
 SCHEDULES_COUNT = Gauge('django_q_schedules_count', 
-    'A count of schedules.')
+    'A count of schedules.', multiprocess_mode=MODE)
 CLUSTER_COUNT = Gauge('django_q_cluster_count',
-    'A count of clsuters.')
+    'A count of clsuters.', multiprocess_mode=MODE)
 WORKER_COUNT = Gauge('django_q_worker_count',
-    'A count of workers.')
+    'A count of workers.', multiprocess_mode=MODE)
 REINCARNATION_COUNT = Gauge('django_q_reincarnation_count', 
-    'A count of processes that have been reincarnated.')
+    'A count of processes that have been reincarnated.', multiprocess_mode=MODE)
 AVERAGE_EXEC_TIME = Summary('django_q_average_execution_seconds',
-    'The average execution time in the last 24 hours.')
+    'The average execution time in the last 24 hours.', multiprocess_mode=MODE)
 TASKS_SUCCESS_PER_DAY = Summary('django_q_tasks_per_day',
-    'The count of sucessful tasks in the last 24 hours')
+    'The count of sucessful tasks in the last 24 hours', multiprocess_mode=MODE)
 
 def call_hook(sender, **kwargs):
     try:
