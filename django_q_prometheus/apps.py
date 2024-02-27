@@ -1,10 +1,6 @@
 import time
-from . import Metrics
-from django.db.models.signals import post_save
 from django.apps import AppConfig
-from django.dispatch import receiver
-from django_q.models import Task
-from prometheus_client import Counter, Gauge, Summary
+from prometheus_client import Gauge, Summary
 
 TASKS_SUCCESS = Gauge('django_q_tasks_success', 
     'A count of successful tasks.')
@@ -27,28 +23,6 @@ TASKS_SUCCESS_PER_DAY = Summary('django_q_tasks_per_day',
 
 last_called = None
 
-def call_hook(sender, **kwargs):
-    if last_called is None:
-        last_called = time.time()
-    # only collect metrics at maxiumum once every 30 seconds.
-    if time.time() - last_called < 30:
-        return
-    
-    m = Metrics()
-    TASKS_SUCCESS.set(m.success_count)
-    TASKS_FAILED.set(m.failure_count)
-    TASKS_QUEUED.set(m.queue_count)
-    SCHEDULES_COUNT.set(m.schedule_count)
-    CLUSTER_COUNT.set(m.cluster_count)
-    WORKER_COUNT.set(m.worker_count)
-    REINCARNATION_COUNT.set(m.reincarnation_count)
-
-    exec, tasks = m.average_execution_time
-    AVERAGE_EXEC_TIME.set(exec)
-    TASKS_SUCCESS_PER_DAY.set(tasks)
-    
-    last_called = time.time()
-
 class DjangoQConfig(AppConfig):
     name = "django_q_proemtheus"
 
@@ -56,6 +30,30 @@ class DjangoQConfig(AppConfig):
         """ Inject the signals 
         """
         from django_q.signals import pre_execute, pre_enqueue
+        from django_q_prometheus.metrics import Metrics
+
+        def call_hook(sender, **kwargs):
+            if last_called is None:
+                last_called = time.time()
+            # only collect metrics at maxiumum once every 30 seconds.
+            if time.time() - last_called < 30:
+                return
+            
+            m = Metrics()
+            TASKS_SUCCESS.set(m.success_count)
+            TASKS_FAILED.set(m.failure_count)
+            TASKS_QUEUED.set(m.queue_count)
+            SCHEDULES_COUNT.set(m.schedule_count)
+            CLUSTER_COUNT.set(m.cluster_count)
+            WORKER_COUNT.set(m.worker_count)
+            REINCARNATION_COUNT.set(m.reincarnation_count)
+
+            exec, tasks = m.average_execution_time
+            AVERAGE_EXEC_TIME.set(exec)
+            TASKS_SUCCESS_PER_DAY.set(tasks)
+            
+            last_called = time.time()
+
         pre_enqueue.connect(call_hook)
         pre_execute.connect(call_hook)
 
