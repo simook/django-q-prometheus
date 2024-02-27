@@ -21,8 +21,6 @@ AVERAGE_EXEC_TIME = Summary('django_q_average_execution_seconds',
 TASKS_SUCCESS_PER_DAY = Summary('django_q_tasks_per_day',
     'The count of sucessful tasks in the last 24 hours')
 
-last_called = None
-
 class DjangoQConfig(AppConfig):
     name = "django_q_prometheus"
 
@@ -33,12 +31,6 @@ class DjangoQConfig(AppConfig):
         from django_q_prometheus.metrics import Metrics
 
         def call_hook(sender, **kwargs):
-            if last_called is None:
-                last_called = time.time()
-            # only collect metrics at maxiumum once every 30 seconds.
-            if time.time() - last_called < 30:
-                return
-            
             m = Metrics()
             TASKS_SUCCESS.set(m.success_count)
             TASKS_FAILED.set(m.failure_count)
@@ -51,8 +43,6 @@ class DjangoQConfig(AppConfig):
             exec, tasks = m.average_execution_time
             AVERAGE_EXEC_TIME.set(exec)
             TASKS_SUCCESS_PER_DAY.set(tasks)
-            
-            last_called = time.time()
 
         pre_enqueue.connect(call_hook)
         pre_execute.connect(call_hook)
