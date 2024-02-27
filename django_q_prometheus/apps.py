@@ -24,7 +24,7 @@ TASKS_SUCCESS_PER_DAY = Summary('django_q_tasks_per_day',
 last_called = None
 
 class DjangoQConfig(AppConfig):
-    name = "django_q_proemtheus"
+    name = "django_q_prometheus"
 
     def ready(self):
         """ Inject the signals 
