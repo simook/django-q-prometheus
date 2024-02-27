@@ -31,18 +31,22 @@ class DjangoQConfig(AppConfig):
         from django_q_prometheus.metrics import Metrics
 
         def call_hook(sender, **kwargs):
-            m = Metrics()
-            TASKS_SUCCESS.set(m.success_count)
-            TASKS_FAILED.set(m.failure_count)
-            TASKS_QUEUED.set(m.queue_count)
-            SCHEDULES_COUNT.set(m.schedule_count)
-            CLUSTER_COUNT.set(m.cluster_count)
-            WORKER_COUNT.set(m.worker_count)
-            REINCARNATION_COUNT.set(m.reincarnation_count)
+            try:
+                m = Metrics()
+                TASKS_SUCCESS.set(m.success_count)
+                TASKS_FAILED.set(m.failure_count)
+                TASKS_QUEUED.set(m.queue_count)
+                SCHEDULES_COUNT.set(m.schedule_count)
+                CLUSTER_COUNT.set(m.cluster_count)
+                WORKER_COUNT.set(m.worker_count)
+                REINCARNATION_COUNT.set(m.reincarnation_count)
 
-            exec, tasks = m.average_execution_time
-            AVERAGE_EXEC_TIME.set(exec)
-            TASKS_SUCCESS_PER_DAY.set(tasks)
+                exec, tasks = m.average_execution_time
+                AVERAGE_EXEC_TIME.set(exec)
+                TASKS_SUCCESS_PER_DAY.set(tasks)
+            except Exception as e:
+                # catch any potential exceptions to prevent disruption to the cluster
+                print(e)
 
         pre_enqueue.connect(call_hook)
         pre_execute.connect(call_hook)
