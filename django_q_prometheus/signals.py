@@ -22,9 +22,9 @@ WORKER_COUNT = Gauge('django_q_worker_count',
     'A count of workers.', multiprocess_mode=MODE)
 REINCARNATION_COUNT = Gauge('django_q_reincarnation_count', 
     'A count of processes that have been reincarnated.', multiprocess_mode=MODE)
-AVERAGE_EXEC_TIME = Summary('django_q_average_execution_seconds',
+AVERAGE_EXEC_TIME = Gauge('django_q_average_execution_seconds',
     'The average execution time in the last 24 hours.', multiprocess_mode=MODE)
-TASKS_SUCCESS_PER_DAY = Summary('django_q_tasks_per_day',
+TASKS_SUCCESS_PER_DAY = Gauge('django_q_tasks_per_day',
     'The count of sucessful tasks in the last 24 hours', multiprocess_mode=MODE)
 
 def call_hook(sender, **kwargs):
@@ -39,8 +39,8 @@ def call_hook(sender, **kwargs):
         REINCARNATION_COUNT.set(m.reincarnation_count)
 
         e, tasks = m.average_execution_time
-        AVERAGE_EXEC_TIME.observe(e)
-        TASKS_SUCCESS_PER_DAY.observe(tasks)
+        AVERAGE_EXEC_TIME.set(e)
+        TASKS_SUCCESS_PER_DAY.set(tasks)
     except Exception as e:
         # catch any potential exceptions to prevent disruption to the cluster
         logger.error(e)
