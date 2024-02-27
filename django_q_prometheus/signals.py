@@ -36,8 +36,8 @@ def call_hook(sender, **kwargs):
         REINCARNATION_COUNT.set(m.reincarnation_count)
 
         exec, tasks = m.average_execution_time
-        AVERAGE_EXEC_TIME.set(exec)
-        TASKS_SUCCESS_PER_DAY.set(tasks)
+        AVERAGE_EXEC_TIME.observe(exec)
+        TASKS_SUCCESS_PER_DAY.observe(tasks)
     except Exception as e:
         # catch any potential exceptions to prevent disruption to the cluster
         logger.error(e)
