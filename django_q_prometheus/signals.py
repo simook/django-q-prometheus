@@ -6,7 +6,7 @@ from django_q_prometheus.metrics import Metrics
 
 logger = logging.getLogger('django.server')
 
-MODE='livemostrecent'
+MODE='mostrecent'
 LABELS = []
 
 TASKS_SUCCESS = Gauge('django_q_tasks_success', 
