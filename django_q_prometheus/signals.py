@@ -1,3 +1,4 @@
+import time
 import logging
 from prometheus_client import Gauge, Summary
 from django_q.signals import pre_execute, pre_enqueue
@@ -5,24 +6,27 @@ from django_q_prometheus.metrics import Metrics
 
 logger = logging.getLogger('django.server')
 
+MODE='mostrecent'
+LABELS = []
+
 TASKS_SUCCESS = Gauge('django_q_tasks_success', 
-    'A count of successful tasks.')
+    'A count of successful tasks.', LABELS, multiprocess_mode=MODE)
 TASKS_FAILED = Gauge('django_q_tasks_failed',
-    'A count of failed tasks.')
+    'A count of failed tasks.', LABELS, multiprocess_mode=MODE)
 TASKS_QUEUED = Gauge('django_q_tasks_queued',
-    'A count of queued tasks.')
+    'A count of queued tasks.', LABELS, multiprocess_mode=MODE)
 SCHEDULES_COUNT = Gauge('django_q_schedules_count', 
-    'A count of schedules.')
+    'A count of schedules.', LABELS, multiprocess_mode=MODE)
 CLUSTER_COUNT = Gauge('django_q_cluster_count',
-    'A count of clsuters.')
+    'A count of clsuters.', LABELS, multiprocess_mode=MODE)
 WORKER_COUNT = Gauge('django_q_worker_count',
-    'A count of workers.')
+    'A count of workers.', LABELS, multiprocess_mode=MODE)
 REINCARNATION_COUNT = Gauge('django_q_reincarnation_count', 
-    'A count of processes that have been reincarnated.')
-AVERAGE_EXEC_TIME = Summary('django_q_average_execution_seconds',
-    'The average execution time in the last 24 hours.')
-TASKS_SUCCESS_PER_DAY = Summary('django_q_tasks_per_day',
-    'The count of sucessful tasks in the last 24 hours')
+    'A count of processes that have been reincarnated.', LABELS, multiprocess_mode=MODE)
+AVERAGE_EXEC_TIME = Gauge('django_q_average_execution_seconds',
+    'The average execution time in the last 24 hours.', LABELS, multiprocess_mode=MODE)
+TASKS_SUCCESS_PER_DAY = Gauge('django_q_tasks_per_day',
+    'The count of sucessful tasks in the last 24 hours', LABELS, multiprocess_mode=MODE)
 
 def call_hook(sender, **kwargs):
     try:
@@ -35,12 +39,15 @@ def call_hook(sender, **kwargs):
         WORKER_COUNT.set(m.worker_count)
         REINCARNATION_COUNT.set(m.reincarnation_count)
 
-        exec, tasks = m.average_execution_time
-        AVERAGE_EXEC_TIME.observe(exec)
-        TASKS_SUCCESS_PER_DAY.observe(tasks)
+        e, tasks = m.average_execution_time
+        AVERAGE_EXEC_TIME.set(e)
+        TASKS_SUCCESS_PER_DAY.set(tasks)
     except Exception as e:
         # catch any potential exceptions to prevent disruption to the cluster
         logger.error(e)
+    else:
+        # todo: control via a django setting
+        logger.info(f'django_q succ={m.success_count} faild={m.failure_count} qued={m.queue_count} schd={m.schedule_count} workr={m.worker_count} reinc={m.reincarnation_count} avg={e}/per.tsk')
 
 pre_enqueue.connect(call_hook)
 pre_execute.connect(call_hook)

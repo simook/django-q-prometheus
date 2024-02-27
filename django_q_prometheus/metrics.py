@@ -100,10 +100,13 @@ class Metrics(object):
         tasks_per_day = last_tasks.count()
         # average execution time over the last 24 hours
         if connection.vendor != "sqlite":
-            exec_time = last_tasks.aggregate(
-                time_taken=Sum(F("stopped") - F("started"))
-            )
-            exec_time = exec_time["time_taken"].total_seconds() / tasks_per_day
+            try:
+                last_tasks_qs = last_tasks.aggregate(
+                    time_taken=Sum(F("stopped") - F("started"))
+                )
+                exec_time = last_tasks_qs["time_taken"].total_seconds() / tasks_per_day
+            except Exception as e:
+                pass
         else:
             # can't sum timedeltas on sqlite
             for t in last_tasks:
