@@ -103,7 +103,8 @@ class Metrics(object):
             exec_time = last_tasks.aggregate(
                 time_taken=Sum(F("stopped") - F("started"))
             )
-            exec_time = exec_time["time_taken"].total_seconds() / tasks_per_day
+            if 'time_taken' in exec_time:
+                exec_time = exec_time["time_taken"].total_seconds() / tasks_per_day
         else:
             # can't sum timedeltas on sqlite
             for t in last_tasks:

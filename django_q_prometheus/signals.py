@@ -25,17 +25,8 @@ AVERAGE_EXEC_TIME = Summary('django_q_average_execution_seconds',
 TASKS_SUCCESS_PER_DAY = Summary('django_q_tasks_per_day',
     'The count of sucessful tasks in the last 24 hours')
 
-
-last_called = None
-
 def call_hook(sender, **kwargs):
     try:
-        if last_called is None:
-            last_called = time.time()
-
-        if time.time() - last_called < 30:
-            return
-
         m = Metrics()
         TASKS_SUCCESS.set(m.success_count)
         TASKS_FAILED.set(m.failure_count)
@@ -45,17 +36,15 @@ def call_hook(sender, **kwargs):
         WORKER_COUNT.set(m.worker_count)
         REINCARNATION_COUNT.set(m.reincarnation_count)
 
-        exec, tasks = m.average_execution_time
-        AVERAGE_EXEC_TIME.observe(exec)
+        e, tasks = m.average_execution_time
+        AVERAGE_EXEC_TIME.observe(e)
         TASKS_SUCCESS_PER_DAY.observe(tasks)
     except Exception as e:
         # catch any potential exceptions to prevent disruption to the cluster
         logger.error(e)
     else:
         # todo: control via a django setting
-        logger.info(f'django_q succ={m.success_count} faild={m.failure_count} qued={m.queue_count} schd={m.schedule_count} workr={m.worker_count} reinc={m.reincarnation_count} avg={exec}/per.tsk')
-    finally:
-        last_called = time.time()
+        logger.info(f'django_q succ={m.success_count} faild={m.failure_count} qued={m.queue_count} schd={m.schedule_count} workr={m.worker_count} reinc={m.reincarnation_count} avg={e}/per.tsk')
 
 pre_enqueue.connect(call_hook)
 pre_execute.connect(call_hook)
