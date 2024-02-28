@@ -45,9 +45,6 @@ def call_hook(sender, **kwargs):
     except Exception as e:
         # catch any potential exceptions to prevent disruption to the cluster
         logger.error(e)
-    else:
-        # todo: control via a django setting
-        logger.info(f'django_q succ={m.success_count} faild={m.failure_count} qued={m.queue_count} schd={m.schedule_count} workr={m.worker_count} reinc={m.reincarnation_count} avg={e}/per.tsk')
 
 pre_enqueue.connect(call_hook)
 pre_execute.connect(call_hook)
